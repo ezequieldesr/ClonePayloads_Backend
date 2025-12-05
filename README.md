@@ -6,6 +6,27 @@ Backend em Java + Spring Boot responsável por clonar payloads JSON e ajustar au
 
 Este serviço é utilizado pelo frontend hospedado em [Vercel](https://payload-cloner.vercel.app/). 
 
+---
+
+## ⚠️ Uso Local (Importante!)
+
+Se você quiser rodar **localmente**, é necessário ajustar CORS e portas:
+
+### ✔ Backend deve rodar na porta **8081**  
+### ✔ Frontend deve rodar na porta **8080**
+
+O frontend local só consegue acessar a API se o backend estiver em:
+```bash
+http://localhost:8081/api/generate
+```
+
+---
+
+E no arquivo `ClonePayloadsApplication.java`, você deve alterar o CORS:
+
+```java
+.allowedOrigins("http://localhost:8080")
+```
 
 ## 🚀 Funcionalidade principal
 
@@ -101,14 +122,14 @@ cd ClonePayloads_Backend
 
 A API sobe normalmente em:
 ```bash
-http://localhost:8080/api/generate
+http://localhost:8081/api/generate
 ```
 ---
 ## 🐳 Rodando com Docker
 
 ```bash
 docker build -t clonepayloads-backend .
-docker run -p 8080:8080 clonepayloads-backend
+docker run -p 8081:8081 clonepayloads-backend
 ```
 ---
 ## 🧪 Testes Unitários 
