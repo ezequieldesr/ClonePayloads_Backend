@@ -1,4 +1,4 @@
-package com.example.ClonePayloads.ClonePayloads.global;
+package com.example.ClonePayloads.global;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

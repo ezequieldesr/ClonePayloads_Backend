@@ -1,4 +1,4 @@
-package com.example.ClonePayloads.ClonePayloads.dto;
+package com.example.ClonePayloads.dto;
 
 import java.util.List;
 import java.util.Map;
