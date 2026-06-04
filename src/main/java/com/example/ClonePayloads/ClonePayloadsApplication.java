@@ -1,4 +1,4 @@
-package com.example.ClonePayloads.ClonePayloads;
+package com.example.ClonePayloads;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

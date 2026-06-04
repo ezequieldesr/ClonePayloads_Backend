@@ -1,4 +1,4 @@
-package com.example.ClonePayloads.ClonePayloads;
+package com.example.ClonePayloads;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

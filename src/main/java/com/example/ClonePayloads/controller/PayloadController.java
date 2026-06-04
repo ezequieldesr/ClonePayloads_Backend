@@ -1,8 +1,7 @@
-package com.example.ClonePayloads.ClonePayloads.controller;
+package com.example.ClonePayloads.controller;
 
-import com.example.ClonePayloads.ClonePayloads.dto.PayloadRequest;
-import com.example.ClonePayloads.ClonePayloads.dto.PayloadResponse;
-import com.example.ClonePayloads.ClonePayloads.service.PayloadService;
+import com.example.ClonePayloads.dto.PayloadRequest;
+import com.example.ClonePayloads.service.PayloadService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -10,6 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -23,8 +25,8 @@ public class PayloadController {
     }
 
     @PostMapping("/generate")
-    public ResponseEntity<PayloadResponse> generatePayloads(@Valid @RequestBody PayloadRequest payloadreq) {
-            return ResponseEntity.ok(payloadService.duplicate(payloadreq));
+    public ResponseEntity<List<Map<String, Object>>> generatePayloads(@Valid @RequestBody PayloadRequest payloadreq) {
+            return ResponseEntity.ok(payloadService.duplicate(payloadreq).getPayloads());
     }
 
 }

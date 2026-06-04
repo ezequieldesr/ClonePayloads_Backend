@@ -1,4 +1,4 @@
-package com.example.ClonePayloads.ClonePayloads.dto;
+package com.example.ClonePayloads.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -22,4 +23,5 @@ public class PayloadRequest {
     @NotEmpty(message = "O payload não pode estar vazio")
     private Map<String, Object> payload;
 
+    private List<FieldRole> fieldRoles;
 }
