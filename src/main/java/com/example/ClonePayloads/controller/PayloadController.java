@@ -15,7 +15,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "https://payload-cloner.vercel.app/")
+@CrossOrigin(origins = "https://clone-payloads.vercel.app/")
 public class PayloadController {
 
     private final PayloadService payloadService;
