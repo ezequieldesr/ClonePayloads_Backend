@@ -18,7 +18,7 @@ public class ClonePayloadsApplication {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("https://payload-cloner.vercel.app/")
+                        .allowedOrigins("https://clone-payloads.vercel.app/")
                         .allowedMethods("POST")
                         .allowedHeaders("*");
             }
