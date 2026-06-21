@@ -1,27 +1,19 @@
 package com.example.ClonePayloads;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @SpringBootApplication
 public class ClonePayloadsApplication {
 
 	public static void main(String[] args) {
+		Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+		dotenv.entries().forEach(entry -> {
+			if (System.getProperty(entry.getKey()) == null && System.getenv(entry.getKey()) == null) {
+				System.setProperty(entry.getKey(), entry.getValue());
+			}
+		});
 		SpringApplication.run(ClonePayloadsApplication.class, args);
 	}
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("https://clone-payloads.vercel.app/")
-                        .allowedMethods("POST")
-                        .allowedHeaders("*");
-            }
-        };
-    }
 }
