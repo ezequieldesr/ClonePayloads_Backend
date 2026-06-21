@@ -4,7 +4,6 @@ import com.example.ClonePayloads.dto.PayloadRequest;
 import com.example.ClonePayloads.service.PayloadService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,7 +14,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "https://clone-payloads.vercel.app/")
 public class PayloadController {
 
     private final PayloadService payloadService;
