@@ -94,8 +94,28 @@ class PayloadControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.payloads").exists())
-                .andExpect(jsonPath("$.payloads.length()").value(2));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings={
+        "{\"quantidade\":101,\"payload\":{\"timestamp\":\"2026-01-01T00:00:00Z\"}}",
+        "{\"quantidade\":2,\"payload\":{\"x\":1},\"fieldRoles\":[null]}",
+        "{\"quantidade\":2,\"payload\":{\"x\":1},\"fieldRoles\":[{\"field\":\"x\",\"strategy\":\"INVALID\"}]}",
+        "{\"quantidade\":2,\"payload\":{\"x\":1},\"fieldRoles\":[{\"field\":\"x\",\"strategy\":\"UUID\"}]}",
+        "{\"quantidade\":2,\"payload\":{\"x\":1},\"fieldRoles\":[{\"field\":\"absent\",\"strategy\":\"UUID\"}]}",
+        "not-json"
+    })
+    void rejectsInvalidRequests(String json) throws Exception {
+        mockMvc.perform(post("/api/generate").contentType(MediaType.APPLICATION_JSON).content(json)).andExpect(status().isBadRequest());
+    }
+    @Test void enforcesBodyLimit() throws Exception {
+        mockMvc.perform(post("/api/generate").servletPath("/api/generate").contentType(MediaType.APPLICATION_JSON).content("x".repeat(65537))).andExpect(status().isPayloadTooLarge());
+    }
+    @Test void enforcesFieldLimit() throws Exception {
+        String fields=java.util.stream.IntStream.range(0,101).mapToObj(i->"\"f"+i+"\":0").collect(java.util.stream.Collectors.joining(","));
+        mockMvc.perform(post("/api/generate").contentType(MediaType.APPLICATION_JSON).content("{\"quantidade\":2,\"payload\":{"+fields+"},\"fieldRoles\":[]}")).andExpect(status().isBadRequest());
     }
 }
 

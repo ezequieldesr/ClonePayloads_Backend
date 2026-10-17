@@ -2,6 +2,9 @@ package com.example.ClonePayloads.dto;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -20,8 +23,11 @@ public class PayloadRequest {
     private int quantidade;
 
     @NotNull(message = "O payload não pode ser nulo")
-    @NotEmpty(message = "O payload não pode estar vazio")
+    @Size(min = 1, message = "O payload não pode estar vazio")
+    @Size(max = 100, message = "A quantidade máxima de campos no payload é 100")
     private Map<String, Object> payload;
 
-    private List<FieldRole> fieldRoles;
+    @Valid
+    @Size(max = 100, message = "A quantidade máxima de regras é 100")
+    private List<@NotNull FieldRole> fieldRoles;
 }

@@ -1,254 +1,167 @@
-# ClonePayloads_Backend
+<div align="center">
 
-## Descrição 📖
+# ClonePayloads · API Java
 
-Backend em Java + Spring Boot responsável por gerar múltiplas variações de payloads JSON a partir de um payload base.
+**Uma entrada JSON, várias cópias com regras por campo. Sem banco de dados.**
 
-A API permite criar até 100 clones aplicando estratégias específicas por campo, como geração de UUIDs, incremento numérico, incremento de timestamps e rotação de valores fixos.
+![Java](https://img.shields.io/badge/Java-21-ed8b00)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-6db33f?logo=springboot)
+[![CI](https://github.com/ezequieldesr/ClonePayloads_Backend/actions/workflows/ci.yml/badge.svg)](https://github.com/ezequieldesr/ClonePayloads_Backend/actions/workflows/ci.yml)
 
-Este serviço é utilizado pelo frontend hospedado em:
-https://clone-payloads.vercel.app/
+[Executar](#executar-localmente) · [Contrato](#api) · [Testes](#testes) · [Frontend](https://github.com/ezequieldesr/ClonePayloads_Frontend)
 
----
+</div>
 
-## ⚠️ Uso Local (Importante!)
+## O projeto
 
-Se você quiser rodar localmente, é necessário ajustar CORS e portas:
+API REST para gerar de 2 a 100 variações de um objeto JSON. Cada campo pode ter uma regra de
+incremento de timestamp, incremento numérico, geração de UUID ou rotação de valores fixos.
+Permite preparar fixtures, exemplos de eventos e massas de dados para testes.
+Não executa testes de carga, não integra Kafka e não precisa de banco de dados.
 
-### ✔ Backend deve rodar na porta 8081
-### ✔ Frontend deve rodar na porta 8080
+Desenvolvida em Java 21 e Spring Boot 4. O projeto **já utilizava Boot 4**, sendo atualizado nesta preparação;
+não usa o override de Jackson 2 do Nord. A serialização permanece sob o gerenciamento do framework.
 
-O frontend local só consegue acessar a API se o backend estiver em:
+## Demonstração
+
+[![ClonePayloads integrado ao frontend](docs/demo/01-home.png)](https://github.com/ezequieldesr/ClonePayloads_Frontend/blob/main/docs/demo/clonepayloads-demo.mp4)
+
+[▶ Vídeo em PT-BR com a API real](https://github.com/ezequieldesr/ClonePayloads_Frontend/blob/main/docs/demo/clonepayloads-demo.mp4)
+· [Roteiro](https://github.com/ezequieldesr/ClonePayloads_Frontend/blob/main/docs/ROTEIRO-DEMONSTRACAO.md)
+
+<details>
+<summary><strong>Ver o resultado da geração</strong></summary>
+
+![Resultado e regras no playground](docs/demo/04-resultado.png)
+
+</details>
+
+## Executar localmente
+
+Requisitos: **Java 21**, Maven 3.9+ ou wrapper Maven incluído. Nenhum PostgreSQL ou Docker é necessário para rodar pela JVM.
 
 ```bash
-http://localhost:8081/api/generate
+git clone https://github.com/ezequieldesr/ClonePayloads_Backend.git
+cd ClonePayloads_Backend
+mvn spring-boot:run
 ```
 
----
+No Windows, o wrapper é `./mvnw.cmd spring-boot:run`; no Linux/macOS, `./mvnw spring-boot:run`.
+O `.env` é opcional e não deve ser publicado. Em um clone novo, pode copiar `.env.example` para `.env`.
+Se já houver configurações próprias, ajuste somente as chaves necessárias sem sobrescrever segredos.
 
-E no arquivo ClonePayloadsApplication.java você deve alterar o CORS:
-
-```java
-.allowedOrigins("http://localhost:8080")
+```dotenv
+PORT=8081
+CORS_ALLOWED_ORIGINS=http://localhost:8080,http://127.0.0.1:8080
 ```
 
----
+Variáveis de ambiente do processo prevalecem sobre `.env`.
+Health check: **http://127.0.0.1:8081/api/health** → `{"status":"UP"}`.
+A raiz `/` não é uma página da aplicação; a interface é servida pelo frontend.
 
-## 🚀 Funcionalidade principal
+Para a interface, clone [ClonePayloads_Frontend](https://github.com/ezequieldesr/ClonePayloads_Frontend), execute
+`npm ci`, configure `.env.local` pelo exemplo e inicie `npm run dev`.
+Abra http://127.0.0.1:8080. Os dois projetos devem permanecer ligados.
 
-A API recebe um JSON contendo:
+## API
 
-* quantidade = número de cópias a serem geradas (mínimo 2, máximo 100)
-
-* payload = objeto JSON base
-
-* fieldRoles = lista contendo as estratégias que serão aplicadas em cada campo
-
-O backend retorna uma lista de payloads clonados aplicando automaticamente as regras configuradas.
-
----
-
-## 🧩 Exemplo de requisição
+### POST /api/generate
 
 ```json
-POST /api/generate
-Content-Type: application/json
-
 {
   "quantidade": 3,
   "payload": {
-    "name": "rodolfo",
-    "timestamp": "2025-12-04T15:40:12.487Z",
-    "userId": "abc",
-    "score": 10
+    "timestamp": "2026-06-01T10:00:00.000Z",
+    "userId": "base",
+    "score": 10.25,
+    "status": "rascunho"
   },
   "fieldRoles": [
-    {
-      "field": "timestamp",
-      "strategy": "TIMESTAMP_INCREMENT"
-    },
-    {
-      "field": "userId",
-      "strategy": "UUID"
-    },
-    {
-      "field": "score",
-      "strategy": "NUMERIC_INCREMENT"
-    }
+    { "field": "timestamp", "strategy": "TIMESTAMP_INCREMENT" },
+    { "field": "userId", "strategy": "UUID" },
+    { "field": "score", "strategy": "NUMERIC_INCREMENT" },
+    { "field": "status", "strategy": "FIXED_VALUES", "values": ["pendente", "aprovado"] }
   ]
 }
 ```
 
-### Resposta
+`Content-Type: application/json`. A resposta 200 é **um array direto**, sem wrapper `payloads`.
+No exemplo: três objetos, UUIDs distintos, scores 11.25/12.25/13.25, timestamps com +1/+2/+3ms
+ e status pendente/aprovado/pendente.
 
-```json
-[
-  {
-    "name": "rodolfo",
-    "timestamp": "2025-12-04T15:40:12.488Z",
-    "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-    "score": 11
-  },
-  {
-    "name": "rodolfo",
-    "timestamp": "2025-12-04T15:40:12.489Z",
-    "userId": "9c858901-8a57-4791-81fe-4c455b099bc9",
-    "score": 12
-  },
-  {
-    "name": "rodolfo",
-    "timestamp": "2025-12-04T15:40:12.490Z",
-    "userId": "16fd2706-8baf-433b-82eb-8c7fada847da",
-    "score": 13
-  }
-]
+| Estratégia | Requisito e resultado |
+| --- | --- |
+| TIMESTAMP_INCREMENT | Campo String ISO-8601 existente; +índice em milissegundos |
+| NUMERIC_INCREMENT | Campo numérico existente; +índice, preservando decimais |
+| UUID | Campo String existente; UUID aleatório por cópia |
+| FIXED_VALUES | Campo existente e lista não vazia; rotação circular |
+
+**Compatibilidade:** `fieldRoles` omitido ou nulo incrementa o campo `timestamp`, que passa a ser obrigatório.
+`fieldRoles: []` preserva todos os valores. Campos não selecionados por regras permanecem iguais.
+As regras atuam nas chaves do primeiro nível; não suportam JSONPath ou caminhos aninhados.
+
+### Limites e erros
+
+- Quantidade: 2–100; payload não nulo/vazio, até 100 campos no primeiro nível.
+- Até 100 regras; listas de valores fixos limitadas a 100 itens de até 1000 caracteres.
+- Corpo total: **64 KiB**, incluindo metadados e regras; excesso retorna 413.
+- JSON, regra ou tipo inválido retorna 400; erros de validação usam mapa de campos e mensagens.
+- Erros de negócio retornam `{"error":"mensagem"}`; falhas inesperadas retornam 500 genérico.
+
+A API é pública e não salva os payloads. Não envie dados pessoais reais, tokens ou senhas.
+CORS restringe chamadas do navegador, mas não funciona como autenticação ou proteção contra abuso.
+
+## Testes
+
+```bash
+mvn -B -ntp verify
 ```
 
----
+22 testes backend passaram na preparação: contrato HTTP, validação, tamanho do corpo, limites,
+tipos, UUIDs, rotação de valores, timestamps e preservação de decimais.
+Não é preciso banco de dados ou servidor externo para a suíte.
+Os quatro cenários Playwright ficam no frontend e exercitam a API real:
 
-## 🧠 Estratégias disponíveis
+```bash
+npm run test:e2e
+npm run demo:record
+```
 
-### TIMESTAMP_INCREMENT
+Mantenha os serviços locais ligados e use dados fictícios. [Evidência resumida](docs/demo/verification.json).
 
-Incrementa timestamps ISO-8601 em +1ms, +2ms, +3ms...
+## Docker e implantação
 
-### NUMERIC_INCREMENT
+```bash
+docker build -t clonepayloads-api .
+docker run --rm -p 127.0.0.1:8081:8081 clonepayloads-api
+```
 
-Incrementa valores numéricos em +1, +2, +3...
+O Dockerfile executa verify e roda como usuário sem privilégios em Java 21 JRE.
+A hospedagem pode fornecer PORT. Configure CORS_ALLOWED_ORIGINS com as origens exatas do frontend,
+separadas por vírgula. Não é necessário contratar um banco para esta aplicação.
 
-### UUID
+Antes de expor a terceiros em escala: configure rate limiting na borda, monitoramento, quotas e
+controle de acesso conforme a necessidade. Os limites de entrada não impedem ataques de volume.
+[Revisão, limitações e proteção de main](docs/CI-SEGURANCA.md).
 
-Gera UUIDs aleatórios para cada clone.
+## Workflows
 
-### FIXED_VALUES
+CI verifica testes e build Docker; CodeQL analisa código; Dependency Review verifica novas dependências
+em PRs; Dependabot propõe atualizações semanais. Não há deploy automático neste pipeline.
+Envie o backend primeiro: o workflow E2E do frontend usa a main pública deste repositório.
+As execuções remotas só acontecem após o envio ao GitHub; a sintaxe foi validada localmente.
 
-Rotaciona valores de uma lista em ordem circular.
-
-Exemplo:
+## Estrutura
 
 ```text
-alice → bob → carol → alice → bob
+src/main/java/com/example/ClonePayloads/
+  controller/    Geração e health check
+  dto/           Entrada, regras e limites de validação
+  service/       Estratégias de geração
+  config/        CORS, headers e limite do corpo HTTP
+  global/        Respostas de erro
+src/test/        Testes de contrato e estratégias
 ```
 
----
-
-## 🛠 Tecnologias utilizadas
-
-* Java 17+
-* Spring Boot
-* Spring Web / MVC
-* Bean Validation (Jakarta Validation)
-* JUnit 5
-* MockMvc
-* Maven
-* Docker (opcional)
-
----
-
-## 📂 Estrutura do projeto
-
-```css
-src/
- └── main/
-      ├── java/
-      │    └── com.example.clonepayloads
-      │          ├── controller/
-      │          ├── dto/
-      │          ├── service/
-      │          └── exceptions/
-      └── test/
-```
-
----
-
-## ⚙️ Como rodar o projeto
-
-▶️ Rodando com Maven
-
-```bash
-git clone https://github.com/ezequieldesr/ClonePayloads_Backend.git
-
-cd ClonePayloads_Backend
-
-./mvnw clean install
-
-./mvnw spring-boot:run
-```
-
-A API sobe normalmente em:
-
-```bash
-http://localhost:8081/api/generate
-```
-
----
-
-## 🐳 Rodando com Docker
-
-```bash
-docker build -t clonepayloads-backend .
-
-docker run -p 8081:8081 clonepayloads-backend
-```
-
----
-
-## 🧪 Testes Unitários
-
-O projeto inclui testes unitários e de integração utilizando MockMvc.
-
-Para rodar:
-
-```bash
-./mvnw test
-```
-
----
-
-## 🔒 Validações implementadas
-
-### PayloadRequest
-
-* quantidade ≥ 2
-* quantidade ≤ 100
-* payload ≠ null
-* payload ≠ vazio
-* payload ≤ 100 campos
-
-### TIMESTAMP_INCREMENT
-
-* exige timestamp ISO-8601 válido
-
-### NUMERIC_INCREMENT
-
-* exige campo numérico
-
-### UUID
-
-* exige campo String
-
-### FIXED_VALUES
-
-* exige lista não vazia
-
----
-
-## 🔗 Endpoint principal
-
-```http
-POST /api/generate
-```
-
-| Campo | Tipo | Obrigatório | Descrição |
-|--------|--------|--------|--------|
-| quantidade | int | ✅ | Quantidade de clones (2–100) |
-| payload | Map | ✅ | Payload base |
-| fieldRoles | List | ❌ | Estratégias aplicadas aos campos |
-
----
-
-## 🌐 CORS
-
-A API está configurada para aceitar requisições apenas do frontend oficial:
-
-https://clone-payloads.vercel.app/
+Desenvolvimento informado: junho a julho de 2026. Preparação da demonstração e CI: outubro de 2026.
+[Autor: Ezequiel](https://github.com/ezequieldesr).

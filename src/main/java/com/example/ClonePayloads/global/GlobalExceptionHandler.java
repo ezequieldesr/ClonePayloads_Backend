@@ -1,34 +1,27 @@
 package com.example.ClonePayloads.global;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.HashMap;
-import java.util.Map;
-
+import org.springframework.web.bind.annotation.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import java.util.*;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    // Captura erros de validação (@Valid)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, Object> errors = new HashMap<>();
-
-        // Percorre todos os erros de campo
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            errors.put(error.getField(), error.getDefaultMessage());
-        });
-
-        // Retorna um JSON com os campos e suas mensagens
+    public ResponseEntity<Map<String,Object>> validation(MethodArgumentNotValidException ex) {
+        Map<String,Object> errors=new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(e->errors.putIfAbsent(e.getField(),e.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errors);
     }
-
-    // Captura quaisquer outras exceções genéricas
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String,String>> business(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest().body(Map.of("error",ex.getMessage()));
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String,String>> malformed() {
+        return ResponseEntity.badRequest().body(Map.of("error","JSON inválido ou estrutura incompatível com a requisição."));
+    }
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleAllExceptions(Exception e) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", e.getMessage());
-        return ResponseEntity.badRequest().body(error);
+    public ResponseEntity<Map<String,String>> unexpected() {
+        return ResponseEntity.internalServerError().body(Map.of("error","Não foi possível concluir a requisição."));
     }
 }
