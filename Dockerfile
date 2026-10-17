@@ -4,7 +4,7 @@ COPY pom.xml .
 RUN mvn -B -ntp dependency:go-offline
 COPY src ./src
 RUN mvn -B -ntp verify
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:24-jre
 WORKDIR /app
 RUN groupadd --system clonepayloads && useradd --system --gid clonepayloads clonepayloads
 COPY --from=build --chown=clonepayloads:clonepayloads /app/target/*.jar app.jar
