@@ -1,16 +1,13 @@
-FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
-
 COPY pom.xml .
+RUN mvn -B -ntp dependency:go-offline
 COPY src ./src
-
-RUN mvn clean package -DskipTests
-
-FROM eclipse-temurin:21-jdk-alpine
+RUN mvn -B -ntp verify
+FROM eclipse-temurin:21-jre
 WORKDIR /app
-
-COPY --from=build /app/target/*.jar app.jar
-
-EXPOSE 8080
-
+RUN groupadd --system clonepayloads && useradd --system --gid clonepayloads clonepayloads
+COPY --from=build --chown=clonepayloads:clonepayloads /app/target/*.jar app.jar
+USER clonepayloads:clonepayloads
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

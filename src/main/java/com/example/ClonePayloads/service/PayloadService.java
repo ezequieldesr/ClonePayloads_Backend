@@ -6,6 +6,7 @@ import com.example.ClonePayloads.dto.PayloadResponse;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.math.BigDecimal;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class PayloadService {
     public Map<String, Object> generatorPayload(Map<String, Object> original, List<FieldRole> fieldRoles, int index) {
         Map<String, Object> clone = new HashMap<>(original);
 
-        if (fieldRoles == null || fieldRoles.isEmpty()) {
+        if (fieldRoles == null) {
             applyTimestampIncrement(clone, "timestamp", index);
             return clone;
         }
@@ -36,10 +37,14 @@ public class PayloadService {
             String field = rule.getField();
             String strategy = rule.getStrategy();
 
+            if (!clone.containsKey(field)) throw new IllegalArgumentException("Campo não encontrado no payload: " + field);
             switch (strategy) {
                 case "TIMESTAMP_INCREMENT" -> applyTimestampIncrement(clone, field, index);
                 case "NUMERIC_INCREMENT" -> applyNumericIncrement(clone, field, index);
-                case "UUID"-> clone.put(field, UUID.randomUUID().toString());
+                case "UUID" -> {
+                    if (!(clone.get(field) instanceof String)) throw new IllegalArgumentException("O campo '"+field+"' precisa ser String para usar UUID");
+                    clone.put(field, UUID.randomUUID().toString());
+                }
                 case "FIXED_VALUES" -> applyFixedValues(clone, field, rule.getValues(), index);
                 default -> throw new IllegalArgumentException("Estratégia desconhecida: " + strategy);
             }
@@ -65,7 +70,7 @@ public class PayloadService {
         if (!(val instanceof Number)) {
             throw new IllegalArgumentException("O campo '" + field + "' precisa ser numérico para usar NUMERIC_INCREMENT");
         }
-        clone.put(field, ((Number) val).longValue() + index);
+        clone.put(field, new BigDecimal(val.toString()).add(BigDecimal.valueOf(index)));
     }
 
     private void applyFixedValues(Map<String, Object> clone, String field, List<String> values, int index) {
